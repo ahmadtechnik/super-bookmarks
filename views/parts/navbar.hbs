@@ -1,0 +1,28 @@
+<nav class="site-nav mx-auto flex w-[min(1220px,calc(100vw-2rem))] flex-col gap-3 px-1 py-4 md:flex-row md:items-center md:justify-between">
+  <div class="min-w-0">
+    <a class="brand block truncate text-xl font-semibold tracking-tight text-[var(--text)] no-underline" href="/">{{appName}}</a>
+  </div>
+  <div class="nav-actions flex flex-col gap-2 md:flex-row md:items-center">
+    <label class="search-shell desktop-search flex min-w-0 items-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2 text-sm text-[var(--muted)] md:min-w-[320px]">
+      <i class="fa-solid fa-magnifying-glass text-xs"></i>
+      <input id="dashboard-search" type="search" class="min-w-0 flex-1 bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]" placeholder="Find site, app, server, or tag" />
+    </label>
+    <div class="flex items-center gap-2 self-end md:self-auto">
+      <button id="theme-toggle" class="theme-toggle inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--line)] bg-transparent text-[var(--text)]" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <i class="fa-regular fa-sun text-sm"></i>
+      </button>
+      <a class="nav-link nav-icon-link inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-3 text-sm text-[var(--text)] no-underline" href="/settings" aria-label="Settings" title="Settings">
+        <i class="fa-solid fa-sliders text-sm"></i>
+        <span class="hidden md:inline">Settings</span>
+      </a>
+      <a class="nav-link nav-icon-link inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-3 text-sm text-[var(--text)] no-underline" href="/docs" aria-label="Docs" title="Docs">
+        <i class="fa-solid fa-book-open text-sm"></i>
+        <span class="hidden md:inline">Docs</span>
+      </a>
+      <a class="nav-link nav-icon-link inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-3 text-sm text-[var(--text)] no-underline" href="/auth/logout" aria-label="Logout" title="Logout">
+        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+        <span class="hidden md:inline">Logout</span>
+      </a>
+    </div>
+  </div>
+</nav>

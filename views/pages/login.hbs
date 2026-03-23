@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/chrome.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="dashboard-body antialiased" data-theme="{{theme}}">
+    <main class="page-shell mx-auto flex min-h-screen w-[min(560px,calc(100vw-2rem))] items-center justify-center py-10">
+      <section class="w-full rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--panel-shadow)] backdrop-blur">
+        <p class="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">Secure access</p>
+        <h1 class="text-3xl font-semibold tracking-tight text-[var(--text)]">Sign in to SuperBookmarks</h1>
+        <p class="mt-3 text-sm leading-6 text-[var(--muted)]">Use the configured username and password to continue. A login dialog will open automatically.</p>
+      </section>
+    </main>
+
+    <script>
+      const returnTo = {{{json returnTo}}};
+
+      async function openLoginDialog() {
+        const result = await Swal.fire({
+          title: 'Sign in',
+          html: `
+            <div class="space-y-3 text-left">
+              <div class="grid gap-2">
+                <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Username</label>
+                <input id="swal-login-username" class="swal-field h-10 text-sm" autocomplete="username" />
+              </div>
+              <div class="grid gap-2">
+                <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Password</label>
+                <input id="swal-login-password" type="password" class="swal-field h-10 text-sm" autocomplete="current-password" />
+              </div>
+            </div>
+          `,
+          width: 480,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          focusConfirm: false,
+          confirmButtonText: 'Sign in',
+          buttonsStyling: false,
+          customClass: {
+            popup: 'swal-dashboard-popup',
+            confirmButton: 'swal-dashboard-confirm',
+            cancelButton: 'swal-dashboard-cancel',
+          },
+          preConfirm: async () => {
+            const username = document.getElementById('swal-login-username')?.value.trim();
+            const password = document.getElementById('swal-login-password')?.value ?? '';
+
+            if (!username || !password) {
+              Swal.showValidationMessage('Username and password are required.');
+              return false;
+            }
+
+            const response = await fetch('/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password, returnTo }),
+            });
+
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({ message: 'Invalid credentials.' }));
+              Swal.showValidationMessage(payload.message || 'Invalid credentials.');
+              return false;
+            }
+
+            return response.json();
+          },
+        });
+
+        if (!result.isConfirmed) {
+          return;
+        }
+
+        window.location.assign(result.value?.returnTo || '/');
+      }
+
+      void openLoginDialog();
+    </script>
+  </body>
+</html>

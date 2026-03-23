@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/chrome.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body class="dashboard-body antialiased" data-theme="{{theme}}">
+    {{> navbar appName=appName}}
+
+    <main id="settings-app" class="page-shell mx-auto flex w-[min(980px,calc(100vw-2rem))] flex-col gap-5 pb-10 pt-5">
+      <section class="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_320px]">
+        <div class="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--panel-shadow)] backdrop-blur">
+          <p class="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">Settings</p>
+          <h1 class="text-3xl font-semibold tracking-tight text-[var(--text)]">Launch prefixes for local apps</h1>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">Define the desktop or protocol prefixes used by APP items so actions can launch the right target locally without hard-coding the full URI each time.</p>
+        </div>
+        <aside class="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--panel-shadow)] backdrop-blur">
+          <p class="text-sm font-semibold text-[var(--text)]">Examples</p>
+          <ul class="mt-3 space-y-3 text-sm text-[var(--muted)]">
+            <li class="flex items-start gap-3"><i class="fa-solid fa-code mt-0.5 text-xs text-[var(--accent-strong)]"></i><span><strong class="text-[var(--text)]">VS Code</strong>: vscode://file/</span></li>
+            <li class="flex items-start gap-3"><i class="fa-solid fa-terminal mt-0.5 text-xs text-[var(--accent-strong)]"></i><span><strong class="text-[var(--text)]">Terminal</strong>: warp://launch/</span></li>
+            <li class="flex items-start gap-3"><i class="fa-solid fa-globe mt-0.5 text-xs text-[var(--accent-strong)]"></i><span><strong class="text-[var(--text)]">Custom tools</strong>: any registered URI scheme</span></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--panel-shadow)] backdrop-blur">
+        <div class="section-heading mb-4 flex flex-col gap-3 border-b border-[var(--line)] pb-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold tracking-tight text-[var(--text)]">Registered prefixes</h2>
+            <p class="mt-1 text-sm text-[var(--muted)]">Each label should match the APP label used on dashboard items.</p>
+          </div>
+          <button type="button" class="primary-button inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold" @click="addPrefix"><i class="fa-solid fa-plus text-xs"></i><span>Add Prefix</span></button>
+        </div>
+        <div class="settings-list space-y-3">
+          <article v-for="(entry, index) in appPrefixes" :key="`${entry.label}-${index}`" class="settings-card grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_auto] md:items-end">
+            <label class="grid gap-2 text-sm text-[var(--muted)]">
+              <span class="font-medium text-[var(--text)]">Label</span>
+              <input v-model="entry.label" type="text" class="swal-field h-11" placeholder="VS Code" />
+            </label>
+            <label class="grid gap-2 text-sm text-[var(--muted)]">
+              <span class="font-medium text-[var(--text)]">Prefix</span>
+              <input v-model="entry.prefix" type="text" class="swal-field h-11" placeholder="vscode://file/" />
+            </label>
+            <button type="button" class="ghost-button inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium" @click="removePrefix(index)"><i class="fa-regular fa-trash-can text-xs"></i><span>Remove</span></button>
+          </article>
+        </div>
+        <div class="settings-actions mt-5 flex flex-col gap-3 border-t border-[var(--line)] pt-4 md:flex-row md:items-center md:justify-between">
+          <button type="button" class="primary-button inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold" @click="save"><i class="fa-solid fa-floppy-disk text-xs"></i><span>Save Changes</span></button>
+          <p class="status-text min-h-6 text-sm text-[var(--muted)]" v-text="statusMessage"></p>
+        </div>
+      </section>
+    </main>
+
+    {{> footer appName=appName}}
+
+    <script id="settings-bootstrap" type="application/json">{{{json bootstrap}}}</script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/settings.js"></script>
+  </body>
+</html>

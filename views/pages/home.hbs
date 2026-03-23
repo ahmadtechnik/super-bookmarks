@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/chrome.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body class="dashboard-body antialiased" data-theme="{{theme}}">
+    {{> navbar appName=appName}}
+
+    <main id="dashboard-app" class="page-shell mx-auto flex w-[min(1220px,calc(100vw-2rem))] flex-col gap-5 pb-10 pt-5">
+      <section class="top-strip grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_340px]">
+        <div class="top-strip-main rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--panel-shadow)] backdrop-blur">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 max-w-2xl">
+              <p class="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.26em] text-[var(--accent-strong)]">Usage-first dashboard</p>
+              <h1 class="max-w-xl text-2xl font-semibold tracking-tight text-[var(--text)] md:text-[2rem]">A quieter, sharper dashboard for links, apps, and servers.</h1>
+              <p class="mt-2 text-[0.82rem] leading-5 text-[var(--muted)]">Surface the tools you touch every day and keep score history without oversized chrome.</p>
+            </div>
+            <div class="hero-actions compact-actions flex flex-wrap justify-end gap-1.5">
+              <button type="button" class="ghost-button hero-icon-button inline-flex items-center justify-center rounded-xl" title="Export items" aria-label="Export items" @click="exportItemsBundle()"><i class="fa-solid fa-file-export text-sm"></i></button>
+              <button type="button" class="ghost-button hero-icon-button inline-flex items-center justify-center rounded-xl" title="Import items" aria-label="Import items" @click="openImportItemsDialog()"><i class="fa-solid fa-file-import text-sm"></i></button>
+              <button type="button" class="ghost-button hero-icon-button inline-flex items-center justify-center rounded-xl" title="Add tag" aria-label="Add tag" @click="openCreateTagDialog()"><i class="fa-solid fa-tag text-sm"></i></button>
+              <button type="button" class="primary-button hero-icon-button inline-flex items-center justify-center rounded-xl" title="Add item" aria-label="Add item" @click="openAddItemDialog"><i class="fa-solid fa-plus text-sm"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="top-strip-stats grid grid-cols-3 gap-2">
+          <article class="top-stat rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-3 shadow-[var(--panel-shadow)] backdrop-blur">
+            <span class="top-stat-label text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Items</span>
+            <strong class="mt-1 block text-xl font-semibold text-[var(--text)]" v-text="items.length"></strong>
+          </article>
+          <article class="top-stat rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-3 shadow-[var(--panel-shadow)] backdrop-blur">
+            <span class="top-stat-label text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Favs</span>
+            <strong class="mt-1 block text-xl font-semibold text-[var(--text)]" v-text="favoriteItems.length"></strong>
+          </article>
+          <article class="top-stat rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-3 shadow-[var(--panel-shadow)] backdrop-blur">
+            <span class="top-stat-label text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Tags</span>
+            <strong class="mt-1 block text-xl font-semibold text-[var(--text)]" v-text="allTags.length"></strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--panel-shadow)] backdrop-blur">
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[140px_180px_180px_180px_auto] xl:items-end">
+          <label class="toolbar-field grid gap-2 text-sm text-[var(--muted)]">
+            <span class="font-medium text-[var(--text)]">View</span>
+            <select v-model="viewMode" class="swal-field h-11">
+              <option value="grid">Grid</option>
+              <option value="list">List</option>
+            </select>
+          </label>
+          <label class="toolbar-field grid gap-2 text-sm text-[var(--muted)]">
+            <span class="font-medium text-[var(--text)]">Sort</span>
+            <select v-model="sortBy" class="swal-field h-11">
+              <option value="totalScore">Total Score</option>
+              <option value="scoreCount">Score Count</option>
+              <option value="latestScoreDate">Latest Score</option>
+              <option value="title">Title</option>
+            </select>
+          </label>
+          <label class="toolbar-field grid gap-2 text-sm text-[var(--muted)]">
+            <span class="font-medium text-[var(--text)]">Group By</span>
+            <select v-model="groupBy" class="swal-field h-11">
+              <option value="">None</option>
+              <option value="tag">Tag</option>
+              <option value="type">Type</option>
+              <option value="title">Title</option>
+            </select>
+          </label>
+          <label v-if="groupOptions.length" class="toolbar-field grid gap-2 text-sm text-[var(--muted)]">
+            <span class="font-medium text-[var(--text)]">Group Value</span>
+            <select v-model="groupValue" class="swal-field h-11">
+              <option value="">All</option>
+              <option v-for="option in groupOptions" :key="option" :value="option">[[ option ]]</option>
+            </select>
+          </label>
+          <label class="favorites-toggle inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 text-sm text-[var(--text)] xl:justify-self-end">
+            <input type="checkbox" class="h-4 w-4" v-model="onlyFavorites" />
+            <i class="fa-solid fa-star text-[0.72rem] text-amber-400"></i>
+            <span>Favorites</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="favorites-strip rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--panel-shadow)] backdrop-blur" v-if="favoriteItems.length">
+        <div class="section-heading mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold tracking-tight text-[var(--text)]">Pinned Favorites</h2>
+            <p class="mt-1 text-sm text-[var(--muted)]">Fast access to the items you want surfaced first.</p>
+          </div>
+        </div>
+        <div class="favorite-row flex flex-wrap gap-2">
+          <button v-for="item in favoriteItems" :key="item.id" class="favorite-chip inline-flex min-w-[170px] items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2 text-left text-sm text-[var(--text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-hover)]" type="button" @click="handleFavoriteItem(item)">
+            <span class="truncate font-medium">[[ item.title ]]</span>
+            <strong class="text-[var(--accent-strong)]">[[ item.totalScore.toFixed(1) ]]</strong>
+          </button>
+        </div>
+      </section>
+
+      <section class="section-heading flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold tracking-tight text-[var(--text)]">Dashboard Items</h2>
+          <p class="mt-1 text-sm text-[var(--muted)]">List and grid views share the same scoring and filtering model.</p>
+        </div>
+        <p v-if="!items.length" class="text-sm text-[var(--muted)]">No items match the current filters.</p>
+      </section>
+
+      <section :class="viewMode === 'grid' ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3' : 'flex flex-col gap-3'">
+        <article
+          v-for="item in items"
+          :key="item.id"
+          class="item-card rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--panel-shadow)] backdrop-blur cursor-pointer"
+          :class="[
+            viewMode === 'list' ? 'md:grid md:grid-cols-[minmax(0,1.1fr)_220px] md:gap-x-5' : 'grid gap-4',
+            isItemExpanded(item) ? 'item-card-expanded' : 'item-card-collapsed',
+          ]"
+          tabindex="0"
+          @click="toggleItemPreview(item)"
+          @keydown.enter.prevent="toggleItemPreview(item)"
+          @keydown.space.prevent="toggleItemPreview(item)"
+        >
+          <div class="grid gap-4 min-w-0">
+            <header class="flex items-start justify-between gap-3">
+              <div class="min-w-0 pr-2">
+                <h3 class="truncate text-base font-semibold tracking-tight text-[var(--text)]">[[ item.title ]]</h3>
+              </div>
+              <div class="item-toolbar flex flex-wrap items-center gap-1.5 self-start sm:justify-end">
+                <button type="button" class="ghost-button item-action-button inline-flex items-center justify-center rounded-lg" aria-label="Show score history" title="Show score history" @click.stop="openItemDetails(item)"><i class="fa-regular fa-clock text-xs" aria-hidden="true"></i></button>
+                <button type="button" class="ghost-button item-action-button inline-flex items-center justify-center rounded-lg" aria-label="Edit item" title="Edit item" @click.stop="openEditItemDialog(item)"><i class="fa-regular fa-pen-to-square text-xs" aria-hidden="true"></i></button>
+                <button type="button" class="ghost-button danger-ghost item-action-button inline-flex items-center justify-center rounded-lg" aria-label="Delete item" title="Delete item" @click.stop="confirmDeleteItem(item)"><i class="fa-regular fa-trash-can text-xs" aria-hidden="true"></i></button>
+                <button v-if="item.type !== 'server'" type="button" class="primary-button item-action-button inline-flex items-center justify-center rounded-lg" :aria-label="getPrimaryActionLabel(item)" :title="getPrimaryActionLabel(item)" @click.stop="triggerItem(item)"><i :class="item.type === 'app' ? 'fa-solid fa-rocket-launch text-xs' : 'fa-solid fa-arrow-up-right-from-square text-xs'" aria-hidden="true"></i></button>
+                <button class="star-button item-action-button inline-flex items-center justify-center rounded-lg" type="button" :aria-label="item.isFav ? 'Remove favorite' : 'Add favorite'" :title="item.isFav ? 'Remove favorite' : 'Add favorite'" @click.stop="toggleFavorite(item)"><i :class="item.isFav ? 'fa-solid fa-star text-[0.72rem] text-amber-400' : 'fa-regular fa-star text-[0.72rem]'" aria-hidden="true"></i></button>
+              </div>
+            </header>
+
+            <div v-if="isItemExpanded(item)" class="grid gap-4 min-w-0">
+              <div class="min-w-0">
+                <p class="item-type mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-strong)]">[[ item.type ]]</p>
+              </div>
+              <p class="item-description text-sm leading-6 text-[var(--muted)]">[[ item.description || 'No description added yet.' ]]</p>
+              <div v-if="item.type === 'server'" class="server-meta-grid grid gap-2">
+                <div v-for="entry in getServerMetadataEntries(item)" :key="`${item.id}-${entry.key}`" class="server-meta-row grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2">
+                  <span class="server-meta-label text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">[[ entry.label ]]</span>
+                  <code class="server-meta-value truncate bg-transparent px-0 text-[0.78rem] text-[var(--text)]">[[ entry.value ]]</code>
+                  <button type="button" class="icon-button inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--panel)] text-[var(--text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-hover)]" :title="`Copy ${entry.label}`" @click.stop="copyServerField(item, entry)">
+                    <i class="fa-regular fa-copy text-xs"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="item-tags flex flex-wrap gap-2">
+                <span v-for="tag in item.tags" :key="tag.id" class="tag-pill rounded-lg border border-[var(--line)] bg-[var(--panel-strong)] px-2.5 py-1 text-[0.72rem] font-medium text-[var(--muted)]">[[ tag.content ]]</span>
+              </div>
+            </div>
+          </div>
+          <div class="item-stats-shell mt-4 flex flex-col gap-4 md:mt-0 md:justify-between">
+            <dl class="item-stats grid grid-cols-2 gap-2">
+              <div class="rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] p-3">
+                <dt class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Total Score</dt>
+                <dd class="mt-2 font-semibold text-[var(--text)]">[[ item.totalScore.toFixed(1) ]]</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] p-3">
+                <dt class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Actions</dt>
+                <dd class="mt-2 font-semibold text-[var(--text)]">[[ item.scoreCount ]]</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      </section>
+
+      <div v-if="detailsOpen" class="details-overlay fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-sm" @click="closeDetails"></div>
+
+      <section v-if="detailsOpen" class="details-panel fixed bottom-4 left-1/2 z-50 w-[min(920px,calc(100vw-1rem))] -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--panel-shadow)] backdrop-blur" @click.stop>
+        <div class="details-header mb-4 flex flex-col gap-3 border-b border-[var(--line)] pb-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">Score Details</p>
+            <h2 class="text-2xl font-semibold tracking-tight text-[var(--text)]">[[ selectedItem?.title ]]</h2>
+          </div>
+          <button type="button" class="ghost-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium" @click="closeDetails"><i class="fa-solid fa-xmark text-xs"></i><span>Close</span></button>
+        </div>
+        <div id="score-table"></div>
+      </section>
+    </main>
+
+    {{> footer appName=appName}}
+
+    <template id="tag-dialog-template">
+      <div class="space-y-4 text-left">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium text-[var(--text)]">Tag label</label>
+          <input id="swal-tag-content" class="swal-field h-11" placeholder="Platform, Monitoring, Payments" />
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium text-[var(--text)]">Category</label>
+          <select id="swal-tag-category" class="swal-field h-11"></select>
+        </div>
+      </div>
+    </template>
+
+    <template id="favorite-server-template">
+      <div class="space-y-3 text-left">
+        <div class="grid gap-1 rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-3">
+          <span class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Server</span>
+          <strong id="favorite-server-title" class="text-base font-semibold text-[var(--text)]"></strong>
+          <p id="favorite-server-description" class="text-sm leading-5 text-[var(--muted)]"></p>
+        </div>
+        <div id="favorite-server-meta" class="grid gap-2"></div>
+      </div>
+    </template>
+
+    <template id="item-import-template">
+      <div class="space-y-4 text-left">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium text-[var(--text)]">Import file</label>
+          <input id="swal-import-file" class="swal-field h-11 file:mr-3 file:rounded-md file:border-0 file:bg-[var(--panel)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--text)]" type="file" accept="application/json,.json" />
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium text-[var(--text)]">JSON bundle</label>
+          <textarea id="swal-import-json" class="swal-field min-h-56 py-3 font-[IBM_Plex_Mono,monospace] text-xs leading-6" spellcheck="false" placeholder="Paste the exported SuperBookmarks JSON bundle here."></textarea>
+          <p class="text-xs leading-5 text-[var(--muted)]">Import uses the same versioned JSON format produced by Export and restores items, scores, and related tags.</p>
+        </div>
+      </div>
+    </template>
+
+    <template id="item-dialog-template">
+      <div class="space-y-3 text-left">
+        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px]">
+          <div class="grid gap-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Title</label>
+            <input id="swal-item-title" class="swal-field h-10 text-sm" placeholder="Internal CRM" />
+          </div>
+          <div class="grid gap-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Type</label>
+            <select id="swal-item-type" class="swal-field h-10 text-sm">
+              <option value="url">URL</option>
+              <option value="app">APP</option>
+              <option value="server">SERVER</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid gap-2">
+          <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Description</label>
+          <textarea id="swal-item-description" class="swal-field min-h-20 py-2.5 text-sm" rows="2" placeholder="Short note about this resource"></textarea>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="grid gap-2">
+            <label id="swal-primary-label" class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Primary target</label>
+            <input id="swal-item-target" class="swal-field h-10 text-sm" placeholder="https://example.com or project/path" />
+            <div id="swal-primary-help" class="text-xs leading-5 text-[var(--muted)]">Pick an item type to see the expected primary value.</div>
+          </div>
+          <div class="grid gap-2">
+            <label id="swal-secondary-label" class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Secondary value</label>
+            <input id="swal-item-secondary" class="swal-field h-10 text-sm" placeholder="Label or domain" />
+            <div id="swal-secondary-help" class="text-xs leading-5 text-[var(--muted)]">Optional helper field for URL and APP items.</div>
+          </div>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="server-only-field hidden grid gap-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">IP address</label>
+            <input id="swal-item-ip" class="swal-field h-10 text-sm" placeholder="10.0.0.8" />
+          </div>
+          <div class="server-only-field hidden items-center rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2.5 md:flex">
+            <label class="inline-flex items-center gap-2.5 text-sm text-[var(--text)]">
+              <input id="swal-item-external" class="h-4 w-4" type="checkbox" />
+              <span>External server</span>
+            </label>
+          </div>
+        </div>
+        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+          <div class="grid gap-2">
+            <div class="flex items-center justify-between gap-3">
+              <label class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Tags</label>
+              <span id="swal-item-tags-count" class="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-[var(--muted)]">0 selected</span>
+            </div>
+            <input id="swal-item-tag-search" class="swal-field h-10 text-sm" placeholder="Filter tags" />
+            <div id="swal-item-tags" class="tag-selector"></div>
+          </div>
+          <div class="flex items-center rounded-xl border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-2.5">
+            <label class="inline-flex items-center gap-2.5 text-sm text-[var(--text)]">
+              <input id="swal-item-fav" class="h-4 w-4" type="checkbox" />
+              <span>Pin as favorite</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="score-history-empty-template">
+      <p class="status-text rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel-strong)] px-4 py-6 text-center text-sm text-[var(--muted)]">No scores recorded yet.</p>
+    </template>
+
+    <template id="score-history-table-template">
+      <div class="score-history-table-shell overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--panel-strong)]">
+        <table class="score-history-table min-w-full border-collapse">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Score</th>
+              <th>Triggered</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </template>
+
+    <template id="score-history-row-template">
+      <tr>
+        <td data-score-field="type"></td>
+        <td data-score-field="score"></td>
+        <td data-score-field="triggeredDate"></td>
+      </tr>
+    </template>
+
+    <script id="dashboard-bootstrap" type="application/json">{{{json bootstrap}}}</script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="/js/dashboard.js"></script>
+  </body>
+</html>
